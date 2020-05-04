@@ -4,10 +4,13 @@
 
 using namespace std;
 int Find(const string magazines[], int num, string name);
-void Add(string magazines[], int quantities[], float unitPrices[], int& num, float& price, int& quantity);
-void Sort(string magazines[], int quantities[], float prices[], int num, char command);
+void Add(string magazines[], int quantities[], float unitPrices[], int& num);
+void SortByName(string magazines[], int quantities[], float prices[], int num);
+void SortByQuantity(string magazines[], int quantities[], float prices[], int num);
+void SortByPrice(string magazines[], int quantities[], float prices[], int num);
+void Sort(string magazines[], int quantities[], float prices[], int mindex, int i);
 void Print(const string magazines[], int quantities[], float prices[], int num);
-void Dispense(string magazines[], int quantities[], float unitPrices[], int& num);
+void Dispense(string magazines[], int quantities[], float unitPrices[], int& num, float& totalSales);
 void Cut(float prices[], int num);
 void Average(int quantities[], float prices[], int num);
 const int MAXSELECTIONS = 6;
@@ -22,6 +25,7 @@ int main()
    float unitPrices[MAXSELECTIONS];
    int numMagazines = 0;
    float priceMagazines = 0;
+   float totalSales = 0;
    int quantityMagazines = 0;
    char command;
    cout << fixed << showpoint << setprecision(2) << endl;
@@ -31,11 +35,11 @@ int main()
    {
       if (command == 'A')
       {
-         Add(magazines, quantities, unitPrices, numMagazines, priceMagazines, quantityMagazines);
+         Add(magazines, quantities, unitPrices, numMagazines);
       }
       else if (command == 'D')
       {
-         Dispense(magazines, quantities, unitPrices, numMagazines);
+         Dispense(magazines, quantities, unitPrices, numMagazines, totalSales);
       }
       else if (command == 'P')
       {
@@ -44,7 +48,33 @@ int main()
       else if (command == 'S')
       {
          cin >> command;
-         Sort(magazines, quantities, unitPrices, numMagazines, command);
+         if (command == 'N')
+         {
+            SortByName(magazines, quantities, unitPrices, numMagazines);
+            cout << "Magazines sorted by name." << endl;
+            if (numMagazines == 0)
+            {
+               cout << "The magazine stand is empty!" << endl;
+            }
+         }
+         else if (command == 'Q')
+         {
+            SortByQuantity(magazines, quantities, unitPrices, numMagazines);
+            cout << "Magazines sorted by quantity." << endl;
+            if (numMagazines == 0)
+            {
+               cout << "The magazine stand is empty!" << endl;
+            }
+         }
+         else if (command == 'P')
+         {
+            SortByPrice(magazines, quantities, unitPrices, numMagazines);
+            cout << "Magazines sorted by price." << endl;
+            if (numMagazines == 0)
+            {
+               cout << "The magazine stand is empty!" << endl;
+            }
+         }
       }
       else if (command == 'C')
       {
@@ -61,8 +91,9 @@ int main()
       }
       cin >> command;
    }
-   //need to keep track of how much was dispensed and price and print out total sales at eof
-   //cout << "Total sales amount for the mini magazine stand is $22.63";
+
+   cout << "Total sales amount for the mini magazine stand is $" << totalSales 
+      << endl << endl << "Normal Termination of Program 4." << endl;
 }
 
 int Find(const string magazines[], int num, string name)
@@ -77,7 +108,7 @@ int Find(const string magazines[], int num, string name)
    return -1;
 }
 
-void Add(string magazines[], int quantities[], float unitPrices[], int& num, float& price, int& quantity)
+void Add(string magazines[], int quantities[], float unitPrices[], int& num)
 {
    string name;
    int newQuantity;
@@ -91,7 +122,7 @@ void Add(string magazines[], int quantities[], float unitPrices[], int& num, flo
       if (newPrice != unitPrices[index])
       {
          unitPrices[index] = newPrice;
-         cout << "Unit price updated to " << unitPrices[index] << endl;
+         cout << "Unit price updated to " << unitPrices[index] << "." << endl;
       }
    }
    else if (num >= MAXSELECTIONS)
@@ -102,14 +133,14 @@ void Add(string magazines[], int quantities[], float unitPrices[], int& num, flo
    {
       magazines[num] = name;
       quantities[num] = newQuantity;
-      cout << newQuantity << " " << name << " added." << endl;
+      cout << name << " added." << endl;
       unitPrices[num] = newPrice;
       num++;
    }
-   Sort(magazines, quantities, unitPrices, num, 'n');
+   SortByName(magazines, quantities, unitPrices, num);
 }
 
-void Dispense(string magazines[], int quantities[], float unitPrices[], int& num)
+void Dispense(string magazines[], int quantities[], float unitPrices[], int& num, float& totalSales)
 {
    string name;
    cin >> name;
@@ -121,13 +152,17 @@ void Dispense(string magazines[], int quantities[], float unitPrices[], int& num
    if (index >= 0)
    {
       cout << "Dispensed one " << name << endl;
+      totalSales += unitPrices[index];
       quantities[index]--;
       if (quantities[index] <= 0)
       {
-         magazines[index] = magazines[num - 1];
-         quantities[index] = quantities[num - 1];
-         unitPrices[index] = unitPrices[num - 1];
-         num--;
+         for (int i = index; i < num - 1; i++)
+         {
+            magazines[i] = magazines[i + 1];
+            quantities[i] = quantities[i + 1];
+            unitPrices[i] = unitPrices[i + 1];
+         }
+            num--;
       }
    }
 }
@@ -135,29 +170,25 @@ void Dispense(string magazines[], int quantities[], float unitPrices[], int& num
 void Print(const string magazines[], int quantities[], float prices[], int num)
 {
    float totalValue = 0;
-   if (num == 0)
+   if (num > 0)
    {
-      //cout << "The magazine stand is empty!" << endl;
-   }
-   else
-   {
-      cout << "Magazines in the mini magazine stand: " << endl;
+      cout << "Magazines in the mini magazine stand:" << endl << endl;
       for (int i = 0; i < num; i++)
       {
-         cout << setw(NAME_WIDTH) << magazines[i] << setw(QUANTITY_WIDTH) << quantities[i] << setw(PRICE_WIDTH) << prices[i] << endl;
+         cout << setw(NAME_WIDTH) << magazines[i] << setw(QUANTITY_WIDTH) << quantities[i] <<
+            setw(PRICE_WIDTH) << prices[i] << endl;
       }
    }
+   cout << endl;
    for (int i = 0; i < num; i++)
    {
       totalValue += quantities[i] * prices[i];
    }
-   cout << "Total value of the magazines in the stand: " << totalValue << endl << endl;
+   cout << "Total value of the magazines in the stand: $" << totalValue << endl << endl;
 }
 
-void Sort(string magazines[], int quantities[], float prices[], int num, char command)
+void SortByName(string magazines[], int quantities[], float prices[], int num)
 {
-   if (command == 'N' || command == 'n')
-   {
       for (int i = 0; i < num - 1; i++)
       {
          int mindex = i;
@@ -168,76 +199,55 @@ void Sort(string magazines[], int quantities[], float prices[], int num, char co
                mindex = j;
             }
          }
-         string tempMags = magazines[i];
-         magazines[i] = magazines[mindex];
-         magazines[mindex] = tempMags;
+         Sort(magazines, quantities, prices, mindex, i);
+      }      
+}
 
-         int tempQuantity = quantities[i];
-         quantities[i] = quantities[mindex];
-         quantities[mindex] = tempQuantity;
-
-         float tempPrice = prices[i];
-         prices[i] = prices[mindex];
-         prices[mindex] = tempPrice;
-      }
-      if (command == 'N')
-      {
-         cout << "Magazines sorted by name." << endl;
-      }
-   }
-   if (command == 'Q')
+void SortByQuantity(string magazines[], int quantities[], float prices[], int num)
+{
+   for (int i = 0; i < num - 1; i++)
    {
-      for (int i = 0; i < num - 1; i++)
+      int mindex = i;
+      for (int j = i + 1; j < num; j++)
       {
-         int mindex = i;
-         for (int j = i + 1; j < num; j++)
+         if (quantities[j] < quantities[mindex])
          {
-            if (quantities[j] < quantities[mindex])
-            {
-               mindex = j;
-            }
+            mindex = j;
          }
-         int tempQuantity = quantities[i];
-         quantities[i] = quantities[mindex];
-         quantities[mindex] = tempQuantity;
-
-         string tempMags = magazines[i];
-         magazines[i] = magazines[mindex];
-         magazines[mindex] = tempMags;
-
-
-         float tempPrice = prices[i];
-         prices[i] = prices[mindex];
-         prices[mindex] = tempPrice;
       }
-      cout << "Magazines sorted by quantity." << endl;
+      Sort(magazines, quantities, prices, mindex, i);
    }
-   if (command == 'P')
+}
+
+void SortByPrice(string magazines[], int quantities[], float prices[], int num)
+{
+   for (int i = 0; i < num - 1; i++)
    {
-      for (int i = 0; i < num - 1; i++)
+      int mindex = i;
+      for (int j = i + 1; j < num; j++)
       {
-         int mindex = i;
-         for (int j = i + 1; j < num; j++)
+         if (prices[j] < prices[mindex])
          {
-            if (prices[j] < prices[mindex])
-            {
-               mindex = j;
-            }
+            mindex = j;
          }
-         float tempPrice = prices[i];
-         prices[i] = prices[mindex];
-         prices[mindex] = tempPrice;
-
-         string tempMags = magazines[i];
-         magazines[i] = magazines[mindex];
-         magazines[mindex] = tempMags;
-
-         int tempQuantity = quantities[i];
-         quantities[i] = quantities[mindex];
-         quantities[mindex] = tempQuantity;
       }
-      cout << "Magazines sorted by price." << endl;
+      Sort(magazines, quantities, prices, mindex, i);
    }
+}
+
+void Sort(string magazines[], int quantities[], float prices[], int mindex, int i)
+{
+   float tempPrice = prices[i];
+   prices[i] = prices[mindex];
+   prices[mindex] = tempPrice;
+
+   string tempMags = magazines[i];
+   magazines[i] = magazines[mindex];
+   magazines[mindex] = tempMags;
+
+   int tempQuantity = quantities[i];
+   quantities[i] = quantities[mindex];
+   quantities[mindex] = tempQuantity;
 }
 
 void Cut(float prices[], int num)
@@ -262,8 +272,8 @@ void Average(int quantities[], float prices[], int num)
    }
    if (totalPrice == 0 || numMags == 0)
    {
-      cout << "Average unit price for all magazines is $0.00" << endl;
-      cout << "The magazine stand is empty!" << endl << endl;
+      cout << "Average unit price for all magazines is $0.00" << endl 
+         << "The magazine stand is empty!" << endl << endl;
    }
    else
       cout << "Average unit price for all magazines is $" << totalPrice / numMags << endl;
